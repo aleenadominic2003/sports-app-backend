@@ -1,129 +1,59 @@
-const express=require("express")
-const cors=require("cors")
-const mongoose=require("mongoose")
+require("dotenv").config();
 
-const app=express()
-app.use(cors())
-app.use(express.json())
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/db");
+const playerController = require("./controllers/playerController");
+const coachController = require("./controllers/coachController");
+const teamController = require("./controllers/teamController");
 
-// Player Database Connection
-const playerDB=mongoose.createConnection("mongodb://aleena:aleena1234@ac-etp0lvq-shard-00-00.rb4mymb.mongodb.net:27017,ac-etp0lvq-shard-00-01.rb4mymb.mongodb.net:27017,ac-etp0lvq-shard-00-02.rb4mymb.mongodb.net:27017/sportsdb?ssl=true&replicaSet=atlas-mfk3xx-shard-0&authSource=admin&appName=Cluster0")
+const app = express();
 
-playerDB.on("connected",()=>{
-    console.log("Player DB Connected")
-})
+app.use(cors());
+app.use(express.json());
 
-// Coach Database Connection
-const coachDB=mongoose.createConnection("mongodb://aleena:aleena1234@ac-etp0lvq-shard-00-00.rb4mymb.mongodb.net:27017,ac-etp0lvq-shard-00-01.rb4mymb.mongodb.net:27017,ac-etp0lvq-shard-00-02.rb4mymb.mongodb.net:27017/sportsdb?ssl=true&replicaSet=atlas-mfk3xx-shard-0&authSource=admin&appName=Cluster0")
+connectDB()
+  .then(() => console.log("MongoDB connected successfully"))
+  .catch((error) => {
+    console.error("MongoDB connection failed", error);
+    process.exit(1);
+  });
 
-coachDB.on("connected",()=>{
-    console.log("Coach DB Connected")
-})
+app.get("/test", (req, res) => {
+  res.send("Hello");
+});
 
-// Team Database Connection
-const teamDB=mongoose.createConnection("mongodb://aleena:aleena1234@ac-etp0lvq-shard-00-00.rb4mymb.mongodb.net:27017,ac-etp0lvq-shard-00-01.rb4mymb.mongodb.net:27017,ac-etp0lvq-shard-00-02.rb4mymb.mongodb.net:27017/sportsdb?ssl=true&replicaSet=atlas-mfk3xx-shard-0&authSource=admin&appName=Cluster0")
+// Player routes
+app.post("/add-player", playerController.addPlayer);
+app.post("/view-player", playerController.viewPlayers);
+app.get("/search-player", playerController.searchPlayer);
+app.put("/update-player/:id", playerController.updatePlayer);
+app.delete("/delete-player/:id", playerController.deletePlayer);
 
-teamDB.on("connected",()=>{
-    console.log("Team DB Connected")
-})
+// Coach routes
+app.post("/add-coach", coachController.addCoach);
+app.post("/view-coach", coachController.viewCoaches);
+app.get("/search-coach", coachController.searchCoach);
+app.put("/update-coach/:id", coachController.updateCoach);
+app.delete("/delete-coach/:id", coachController.deleteCoach);
 
+// Team routes
+app.post("/add-team", teamController.addTeam);
+app.post("/view-team", teamController.viewTeams);
+app.get("/search-team", teamController.searchTeam);
+app.put("/update-team/:id", teamController.updateTeam);
+app.delete("/delete-team/:id", teamController.deleteTeam);
 
-//================ PLAYER MODEL ================
+app.use((req, res) => {
+  res.status(404).json({ status: "error", message: "Route not found" });
+});
 
-const Player=playerDB.model("Players",new mongoose.Schema(
-{
-    PlayerId:String,
-    FirstName:String,
-    LastName:String,
-    Dob:String,
-    Gender:String,
-    ContactNumber:String,
-    Email:String,
-    EmergencyContactName:String,
-    SelectedPrimarySport:String,
-    SkillLevel:String,
-    MembershipJoiningDate:String,
-    MedicalClearanceStatus:String
-}
-))
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ status: "error", message: err.message || "Internal server error" });
+});
 
-app.get("/test",(request,response)=>{
-    response.send("Hello")     //if this api called pass msg hello
-
-
-})
-
-app.post("/add-player",async(req,res)=>{
-    await Player.create(req.body)
-    res.json({"status":"success"})
-})
-
-app.post("/view-player",async(req,res)=>{
-    const players=await Player.find()
-    res.json(players)
-})
-//================ COACH MODEL ================
-
-const Coach=coachDB.model("Coaches",new mongoose.Schema(
-{
-    CoachId:String,
-    FullName:String,
-    EmailProfile:String,
-    PhoneNumber:String,
-    SpecializationSport:String,
-    CertificationsHeld:String,
-    YearsOfActiveExperience:String,
-    MonthlyContractSalary:String,
-    PreferredCoachingShift:String,
-    AssignedTrainingGround:String,
-    DateOfHiring:String,
-    EmploymentStatus:String
-}
-))
-
-
-
-app.post("/add-coach",async(req,res)=>{
-    await Coach.create(req.body)
-    res.json({"status":"success"})
-})
-
-app.post("/view-coach",async(req,res)=>{
-    const coaches=await Coach.find()
-    res.json(coaches)
-})
-
-//================ TEAM MODEL ================
-
-const Team=teamDB.model("Teams",new mongoose.Schema(
-{
-    TeamId:String,
-    OfficialTeamName:String,
-    AssociatedSportCategory:String,
-    AssignedHeadCoachId:String,
-    TeamCaptainName:String,
-    MaximumSquadSizeLimit:String,
-    HomeVenueStadiumName:String,
-    PrimaryKitJerseyColor:String,
-    SponsorshipBrandPartner:String,
-    CurrentTournamentDivision:String,
-    CreationFormationDate:String,
-    AnnualOperatingBudget:String
-}
-))
-
-
-
-app.post("/add-team",async(req,res)=>{
-    await Team.create(req.body)
-    res.json({"status":"success"})
-})
-
-app.post("/view-team",async(req,res)=>{
-    const teams=await Team.find()
-    res.json(teams)
-})
-
-app.listen(4000,()=>{
-    console.log("Server Started")
-})
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
+});
