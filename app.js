@@ -58,7 +58,10 @@ app.post("/add-player",async(req,res)=>{
     res.json({"status":"success"})
 })
 
-
+app.post("/view-player",async(req,res)=>{
+    const players=await Player.find()
+    res.json(players)
+})
 //================ COACH MODEL ================
 
 const Coach=coachDB.model("Coaches",new mongoose.Schema(
@@ -85,6 +88,10 @@ app.post("/add-coach",async(req,res)=>{
     res.json({"status":"success"})
 })
 
+app.post("/view-coach",async(req,res)=>{
+    const coaches=await Coach.find()
+    res.json(coaches)
+})
 
 //================ TEAM MODEL ================
 
@@ -110,6 +117,11 @@ const Team=teamDB.model("Teams",new mongoose.Schema(
 app.post("/add-team",async(req,res)=>{
     await Team.create(req.body)
     res.json({"status":"success"})
+})
+
+app.post("/view-team",async(req,res)=>{
+    const teams=await Team.find()
+    res.json(teams)
 })
 
 app.listen(4000,()=>{
